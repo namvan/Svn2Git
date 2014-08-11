@@ -2,22 +2,49 @@ Svn2Git
 =======
 
 Migrate from SVN to Git with Fast Export for large/complex repositories.
-Content below is copied and adapted from the content from KDE guide below and Jeff Geerling blogpost
-https://techbase.kde.org/Projects/MoveToGit/UsingSvn2Git
-http://www.midwesternmac.com/blogs/jeff-geerling/switching-svn-repository-svn2git
+Content below is copied and adapted from the content from [KDE Project] (https://techbase.kde.org/Projects/MoveToGit/UsingSvn2Git) and [Jeff Geerling blogpost](http://www.midwesternmac.com/blogs/jeff-geerling/switching-svn-repository-svn2git)
 
-## Building Svn2Git
+## Landing on Earth
+
+The ultimate command would be something like this
+
+	$ call-the-export-command [parameters] [author-map-file] [rules-to-map-file] the-current-svn-repository-path
+
+## First thing first: Building Svn2Git
 You need to have Qt4 and libsvn-dev installed on your machine to build Svn2Git.
-Get and install them using first
+Install them first using
 
 	$ sudo yum install -y qt qt-devel
 	$ sudo yum install -y subversion-devel
 
-Now tool is ready to build. Switch to the code location and issue make. It will create the executable called `svn-all-fast-export`
+Now, tool is ready to build. Switch to the code location and issue make. It will create the executable called `svn-all-fast-export`
+
 	$ cd svn2git
 	$ qmake && make
+
+## The second piece: Author mapping file
+
+SVN only stored the username/code of the author for each revision. Git, however, requires full name and email address of the author to be provided. This means that you will need to provide a mapping for authors from Subversion to Git. The easiest way is to create a text file that link these 2 pieces of information between Subversion and Git.
+
+The format of this mapping file should be something like this
+
+	FBaggins =  Frodo Baggins  <fbaggins@lordofthering.world>
+	fbaggins =  Frodo Baggins  <fbaggins@lordofthering.world>
+	SGamgee  =  Samwise Gamgee <sgamgee@lordofthering.world>
+	sgamgee  =  Samwise Gamgee <sgamgee@lordofthering.world>
+	sGamgee  =  Samwise Gamgee <sgamgee@lordofthering.world>
+	Sgamgee  =  Samwise Gamgee <sgamgee@lordofthering.world>
+
+There are a couple of ways to generate this information from SVN repository by using command line. Each requires different tools.
+
+	$ svn log --quiet http://path/to/root/of/project | grep -E "r[0-9]+ \| .+ \|" | awk '{print $3}' | sort | uniq
 	
-## How rulesets work
+	$ svn log ^/ --xml | grep -P "^<author" | sort -u | perl -pe 's/<author>(.*?)<\/author>/$1 = /' > users.txt
+	
+## The third piece: How rulesets work
+
+Matching rules to be provided using QT Regular Expressions. More details can be found at [QRegExp Class Reference] (http://qt-project.org/doc/qt-4.7/qregexp.html "QRegExp Class Reference at Qt Project"). Pay close attention to the **Introduction** and **Capturing Text**.
+
 The format for the Svn2Git rules is pretty simple. First and foremost you have to declare some repositories:
 
 	create repository kdelibs
@@ -56,7 +83,7 @@ That means the rule `branches/KDE/[^/]+/kdelibs/` will not match.
 
 We need to tell the tool that something interesting happened inside and it should recurse. Then it will apply again all rules to the files that exist at that point, at which point the rules will match.
 
-## Important Details
+### Important Details
 
 * All rules matching directories need to end with a '/', else the tool will crash at some point. This is a known bug. The only exception are the rules using the recurse-action.
 
@@ -68,10 +95,10 @@ We need to tell the tool that something interesting happened inside and it shoul
 
 * Each rule file needs to handle all commits, ie. each file should end with a rule which matches everything and does nothing.
 
-## Step-by-Step on writing rules for a module
+### Step-by-Step on writing rules for a module
 Please adapt these instructions to suit your needs. Adapted texts from KDE are provided here as an example only
 
-### Analyzing Subversion history to write rules
+#### Analyzing Subversion history to write rules
 
 First of all you should check whether there are already rules for this module in the kde-ruleset repository. If there are rules already please go down to "Running Svn2Git"
 
@@ -108,7 +135,7 @@ The rule for putting commits into a git branch in the final repository is only s
 
 And last are the tags, this works the same as branches and trunk, except for using branch refs/tags/v<tag-version> for the branch parameter.
 
-## Running Svn2Git
+## Let's start the fun: Running Svn2Git
 This is the easiest, but most time-consuming part. As example lets say that in our current working directory we have the kde rules repository in kde-ruleset subdir, the Svn2Git tool in the Svn2Git subdir and the KDE repository in the svn subdir:
 
 	svn2git/svn-all-fast-export --identity-map kde-ruleset/account-map --rules kde-ruleset/module svn
@@ -129,7 +156,7 @@ Empty commit objects for tags can be fixed by running "kde-ruleset/bin/fix-tags"
 
 Both processes leave a backup of the original commit objects. These can be removed with "kde-ruleset/bin/remove-fb-backup-refs.sh".
 
-## Checking for proper history in the new git repository
+### Checking for proper history in the new git repository
 To check the history of the created git repository simply change into the directory and use your favourite git command like ''git log'' to check if all is well.
 
 A **very easy way to check whether the history was imported properly** is to use the gitk tool from git. It shows you a graphical representation of the history in the git repository which makes it easy to identify where something is wrong.
