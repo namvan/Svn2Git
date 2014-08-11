@@ -141,6 +141,7 @@ This is the easiest, but most time-consuming part. As example lets say that in o
 	svn2git/svn-all-fast-export --identity-map kde-ruleset/account-map --rules kde-ruleset/module svn
 
 Here is the syntax
+
 	$ /path/to/svn-all-fast-export --identity-map=path/to/account-map-file --rules=path/to/rule-definition-file --stats --add-metadata path/to/svn-repository
 
 Once its done you should have a new "module" git repository in your current working directory. 
