@@ -6,7 +6,7 @@ Content below is copied and adapted from the content from KDE guide below and Je
 https://techbase.kde.org/Projects/MoveToGit/UsingSvn2Git
 http://www.midwesternmac.com/blogs/jeff-geerling/switching-svn-repository-svn2git
 
-# Building Svn2Git
+## Building Svn2Git
 You need to have Qt4 and libsvn-dev installed on your machine to build Svn2Git.
 Get and install them using first
 
@@ -17,7 +17,7 @@ Now tool is ready to build. Switch to the code location and issue make. It will 
 	$ cd svn2git
 	$ qmake && make
 	
-# How rulesets work
+## How rulesets work
 The format for the Svn2Git rules is pretty simple. First and foremost you have to declare some repositories:
 
 	create repository kdelibs
@@ -35,7 +35,6 @@ As examples are more explanatory, the following rule would put all commits from 
 	  repository kdelibs
 	  branch master
 	end match
-
 
 The min and max revision are useful in cases where the same path in SVN contains code for different branches. An example would be KDevelop3, where KDevelop 3.3 was shipped with KDE 3.5 until 3.5.7, 3.5.8 contained KDevelop 3.4 and 3.5.9 contained KDevelop 3.5 and all of those kdevelop versions are now under /branches/KDE/3.5/kdevelop.
 
@@ -57,7 +56,7 @@ That means the rule `branches/KDE/[^/]+/kdelibs/` will not match.
 
 We need to tell the tool that something interesting happened inside and it should recurse. Then it will apply again all rules to the files that exist at that point, at which point the rules will match.
 
-# Important Details
+## Important Details
 
 * All rules matching directories need to end with a '/', else the tool will crash at some point. This is a known bug. The only exception are the rules using the recurse-action.
 
@@ -69,10 +68,10 @@ We need to tell the tool that something interesting happened inside and it shoul
 
 * Each rule file needs to handle all commits, ie. each file should end with a rule which matches everything and does nothing.
 
-# Step-by-Step on writing rules for a module
+## Step-by-Step on writing rules for a module
 Please adapt these instructions to suit your needs. Adapted texts from KDE are provided here as an example only
 
-## Analyzing Subversion history to write rules
+### Analyzing Subversion history to write rules
 
 First of all you should check whether there are already rules for this module in the kde-ruleset repository. If there are rules already please go down to "Running Svn2Git"
 
@@ -109,7 +108,7 @@ The rule for putting commits into a git branch in the final repository is only s
 
 And last are the tags, this works the same as branches and trunk, except for using branch refs/tags/v<tag-version> for the branch parameter.
 
-# Running Svn2Git
+## Running Svn2Git
 This is the easiest, but most time-consuming part. As example lets say that in our current working directory we have the kde rules repository in kde-ruleset subdir, the Svn2Git tool in the Svn2Git subdir and the KDE repository in the svn subdir:
 
 	svn2git/svn-all-fast-export --identity-map kde-ruleset/account-map --rules kde-ruleset/module svn
@@ -119,7 +118,7 @@ Here is the syntax
 
 Once its done you should have a new "module" git repository in your current working directory. 
 
-# Post-processing
+## Post-processing
 Some problems that might occur in the converted git repository can be fixed after the actual conversion. More specifically, these are wrong parents and empty commit objects for tags.
 
 Wrong parents can be handled using a parent map. This is a file with each line in the format "parent-id child-id", where both ids are the integer numbers of the corresponding svn commit. You can also add newlines and comments starting with #. Each line in the parent map adds an edge in the commit graph from parent to child. This is frequently necessary to correctly reflect merges in the git history. Occasionally, Svn2Git might add a parent which should not be a parent at all. In this case, you can write a line "clear child-id" to delete that edge, and afterwards add the correct edge as explained above. It is usually easiest to first do a conversion, then look at the result with "gitk --all" and if something is wrong  find the svn ids from the git commit message.
@@ -130,7 +129,7 @@ Empty commit objects for tags can be fixed by running "kde-ruleset/bin/fix-tags"
 
 Both processes leave a backup of the original commit objects. These can be removed with "kde-ruleset/bin/remove-fb-backup-refs.sh".
 
-# Checking for proper history in the new git repository
+## Checking for proper history in the new git repository
 To check the history of the created git repository simply change into the directory and use your favourite git command like ''git log'' to check if all is well.
 
 A **very easy way to check whether the history was imported properly** is to use the gitk tool from git. It shows you a graphical representation of the history in the git repository which makes it easy to identify where something is wrong.
@@ -179,9 +178,9 @@ Also try grepping the output from Svn2Git for the string '"copy from"' (with the
 
 Before publishing the newly created git repository make sure to repack it. This can greatly reduce it's size (i.e. Phonon's git repository could be shrunken from 18 MB to 5.2 MB)
 
-# Troubleshooting
+## Troubleshooting
 
-## Recurse action doesn't work with cvs2svn tag commits
+### Recurse action doesn't work with cvs2svn tag commits
 
 You may have to deal with a commit done by cvs2svn to create a tag, for example:
 <pre>
